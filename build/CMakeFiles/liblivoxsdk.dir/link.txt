@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -pthread -shared -Wl,-soname,libliblivoxsdk.so -o libliblivoxsdk.so CMakeFiles/liblivoxsdk.dir/sdk_core/src/livox_sdk.cpp.o 
