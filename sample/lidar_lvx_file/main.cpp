@@ -76,6 +76,7 @@ void OnLidarErrorStatusCallback(livox_status status, uint8_t handle, ErrorMessag
 
 /** Receiving point cloud data from Livox LiDAR. */
 void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void *client_data) {
+  printf("GET LIDAR DATA WORKS\n");
   if (data) {
     if (handle < connected_lidar_count && is_finish_extrinsic_parameter) {
       std::unique_lock<std::mutex> lock(mtx);
@@ -215,7 +216,8 @@ void OnDeviceInfoChange(const DeviceInfo *info, DeviceEvent type) {
       } else {
         LidarGetExtrinsicFromXml(handle);
       }
-      LidarStartSampling(handle, OnSampleCallback, nullptr);
+      int status = LidarStartSampling(handle, OnSampleCallback, nullptr);
+      printf("SAMPLING STATUS: %d\n", status);
       devices[handle].device_state = kDeviceStateSampling;
     }
   }
@@ -271,6 +273,7 @@ void AddDevicesToConnect() {
     livox_status result = AddLidarToConnect(broadcast_code_rev[i].c_str(), &handle);
     if (result == kStatusSuccess) {
       /** Set the point cloud data for a specific Livox LiDAR. */
+      printf("Result: %d, success: %d\n", result, kStatusSuccess);
       SetDataCallback(handle, GetLidarData, nullptr);
       devices[handle].handle = handle;
       devices[handle].device_state = kDeviceStateDisconnect;
@@ -357,6 +360,7 @@ int main(int argc, const char *argv[]) {
     Uninit();
     return -1;
   }
+  printf("Connected: %d, size: %d\n", connected_lidar_count, point_packet_list.size());
 
   WaitForExtrinsicParameter();
 

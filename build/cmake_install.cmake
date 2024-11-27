@@ -1,4 +1,4 @@
-# Install script for directory: /Livox-SDK
+# Install script for directory: /home/operator/new_lib/Livox-SDK-Python
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -37,22 +37,17 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "FALSE")
 endif()
 
-# Set default install directory permissions.
-if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/usr/bin/objdump")
-endif()
-
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/Livox-SDK/build/sdk_core/cmake_install.cmake")
-  include("/Livox-SDK/build/sample/hub/cmake_install.cmake")
-  include("/Livox-SDK/build/sample/lidar/cmake_install.cmake")
-  include("/Livox-SDK/build/sample/hub_lvx_file/cmake_install.cmake")
-  include("/Livox-SDK/build/sample/lidar_lvx_file/cmake_install.cmake")
-  include("/Livox-SDK/build/sample_cc/hub/cmake_install.cmake")
-  include("/Livox-SDK/build/sample_cc/lidar/cmake_install.cmake")
-  include("/Livox-SDK/build/sample_cc/trouble_shooting/cmake_install.cmake")
-  include("/Livox-SDK/build/sample_cc/lidar_utc_sync/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sdk_core/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample/hub/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample/lidar/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample/hub_lvx_file/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample/lidar_lvx_file/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample_cc/hub/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample_cc/lidar/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample_cc/trouble_shooting/cmake_install.cmake")
+  include("/home/operator/new_lib/Livox-SDK-Python/build/sample_cc/lidar_utc_sync/cmake_install.cmake")
 
 endif()
 
@@ -64,5 +59,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Livox-SDK/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/operator/new_lib/Livox-SDK-Python/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

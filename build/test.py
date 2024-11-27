@@ -9,7 +9,7 @@ class DeviceState(Enum):
 
 class DeviceItem:
 
-    def __init__(handle : int, device_state : DeviceState, info : pylivox.PyDeviceInfo):
+    def __init__(handle, device_state, info):
         self.handle = handle
         self.device_state = device_state
         self.info = info
@@ -17,7 +17,7 @@ class DeviceItem:
 devices = [DeviceItem for _ in range(kMaxLidarCount)]
 
 def OnSampleCallback(status, handle, response):
-    print(f'OnSampleCallback statue f{status} handle f{handle} response {response} \n')
+    print(f"OnSampleCallback status {status} handle {handle} response {response} \n")
     if status == pylivox.PyLivoxStatus.StatusSucess():
         if response != 0:
             devices[handle].device_state = DeviceState.kDeviceStateConnect

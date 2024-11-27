@@ -1,8 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/lidar_sample_cc.dir/lds_lidar.cpp.o"
-  "CMakeFiles/lidar_sample_cc.dir/lds_lidar.cpp.o.d"
   "CMakeFiles/lidar_sample_cc.dir/main.cpp.o"
-  "CMakeFiles/lidar_sample_cc.dir/main.cpp.o.d"
   "lidar_sample_cc"
   "lidar_sample_cc.pdb"
 )

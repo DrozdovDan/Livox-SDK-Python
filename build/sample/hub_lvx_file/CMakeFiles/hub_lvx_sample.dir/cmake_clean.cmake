@@ -1,8 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/hub_lvx_sample.dir/lvx_file.cpp.o"
-  "CMakeFiles/hub_lvx_sample.dir/lvx_file.cpp.o.d"
   "CMakeFiles/hub_lvx_sample.dir/main.cpp.o"
-  "CMakeFiles/hub_lvx_sample.dir/main.cpp.o.d"
   "hub_lvx_sample"
   "hub_lvx_sample.pdb"
 )

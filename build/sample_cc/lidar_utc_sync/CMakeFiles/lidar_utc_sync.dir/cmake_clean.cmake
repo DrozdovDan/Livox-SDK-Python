@@ -1,10 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/lidar_utc_sync.dir/lds_lidar.cpp.o"
-  "CMakeFiles/lidar_utc_sync.dir/lds_lidar.cpp.o.d"
   "CMakeFiles/lidar_utc_sync.dir/main.cpp.o"
-  "CMakeFiles/lidar_utc_sync.dir/main.cpp.o.d"
   "CMakeFiles/lidar_utc_sync.dir/synchro.cpp.o"
-  "CMakeFiles/lidar_utc_sync.dir/synchro.cpp.o.d"
   "lidar_utc_sync"
   "lidar_utc_sync.pdb"
 )

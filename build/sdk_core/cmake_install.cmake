@@ -1,4 +1,4 @@
-# Install script for directory: /Livox-SDK/sdk_core
+# Install script for directory: /home/operator/new_lib/Livox-SDK-Python/sdk_core
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -37,19 +37,14 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "FALSE")
 endif()
 
-# Set default install directory permissions.
-if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/usr/bin/objdump")
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/home/operator/new_lib/Livox-SDK-Python/build/sdk_core/liblivox_sdk_static.a")
 endif()
 
-if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/Livox-SDK/build/sdk_core/liblivox_sdk_static.a")
-endif()
-
-if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES
-    "/Livox-SDK/sdk_core/include/livox_def.h"
-    "/Livox-SDK/sdk_core/include/livox_sdk.h"
+    "/home/operator/new_lib/Livox-SDK-Python/sdk_core/include/livox_def.h"
+    "/home/operator/new_lib/Livox-SDK-Python/sdk_core/include/livox_sdk.h"
     )
 endif()
 

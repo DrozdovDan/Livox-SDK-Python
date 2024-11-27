@@ -1,8 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/hub_sample_cc.dir/lds_hub.cpp.o"
-  "CMakeFiles/hub_sample_cc.dir/lds_hub.cpp.o.d"
   "CMakeFiles/hub_sample_cc.dir/main.cpp.o"
-  "CMakeFiles/hub_sample_cc.dir/main.cpp.o.d"
   "hub_sample_cc"
   "hub_sample_cc.pdb"
 )

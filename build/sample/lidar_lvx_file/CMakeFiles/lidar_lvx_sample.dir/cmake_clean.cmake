@@ -1,8 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/lidar_lvx_sample.dir/lvx_file.cpp.o"
-  "CMakeFiles/lidar_lvx_sample.dir/lvx_file.cpp.o.d"
   "CMakeFiles/lidar_lvx_sample.dir/main.cpp.o"
-  "CMakeFiles/lidar_lvx_sample.dir/main.cpp.o.d"
   "lidar_lvx_sample"
   "lidar_lvx_sample.pdb"
 )
