@@ -3,6 +3,7 @@ from libcpp cimport bool
 from libc.stdint cimport int32_t, int16_t, int8_t, int64_t, uint8_t, uint16_t, uint64_t, uint32_t
 from cython.cimports.cpython import array
 import array
+from cython.operator import dereference
 
 kMaxLidarCount = 32
 
@@ -31,6 +32,12 @@ cdef extern from "../sdk_core/include/livox_sdk.h":
     livox_status AddHubToConnect(const char *broadcast_code, uint8_t *handle)
     livox_status AddLidarToConnect(const char *broadcast_code, uint8_t *handle)
     livox_status GetConnectedDevices(DeviceInfo *devices, uint8_t *size)
+    ctypedef void (*ErrorMessageCallback)(livox_status status, uint8_t handle, ErrorMessage *message)
+    livox_status SetErrorMessageCallback(uint8_t handle, ErrorMessageCallback cb);
+    ctypedef void (*DataCallback)(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void* client_data)
+    void SetDataCallback(uint8_t handle, DataCallback cb, void* client_data)
+    livox_status LidarStartSampling(uint8_t handle, CommonCommandCallback cb, void* client_data)
+    livox_status LidarStopSampling(uint8_t handle, CommonCommandCallback cb, void* client_data)
 
 def PyInit():
     '''
@@ -71,26 +78,39 @@ def PyGetLivoxSdkVersion(version: PyLivoxSdkVersion):
     '''
     GetLivoxSdkVersion(&version.core)
 
-cdef void callCommonCommandCallback(livox_status status, uint8_t handle, uint8_t response, void* f) noexcept:
-    (<object>f)(status, handle, response)
-
-def PyHubStartSampling(cb):
+cdef void cCommonCommandCallback(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pyCommonCommandCallback
+    pyCommonCommandCallback(status, handle, response, <object> client_data)
+    
+def PyHubStartSampling(cb, client_data):
     '''
     * Start hub sampling.
     * @param  cb            callback for the command.
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    return HubStartSampling(callCommonCommandCallback, <void*> cb)
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb
+    return HubStartSampling(cCommonCommandCallback, <void*> client_data)
 
-def PyHubStopSampling(cb):
+def PyHubStopSampling(cb, client_data):
     '''
     * Stop the Livox Hub's sampling.
     * @param  cb            callback for the command.
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    return HubStopSampling(callCommonCommandCallback, <void*> cb)
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb 
+    return HubStopSampling(cCommonCommandCallback, <void*> client_data)
 
 def PyHubGetLidarHandle(slot, id):
     '''
@@ -101,7 +121,7 @@ def PyHubGetLidarHandle(slot, id):
     '''
     return HubGetLidarHandle(slot, id)
 
-def PyDisconnectDevice(handle, cb):
+def PyDisconnectDevice(handle, cb, client_data):
     '''
     * Disconnect divice.
     * @param  handle        device handle.
@@ -109,9 +129,11 @@ def PyDisconnectDevice(handle, cb):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    return DisconnectDevice(handle, callCommonCommandCallback, <void*> cb)
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb 
+    return DisconnectDevice(handle, cCommonCommandCallback, <void*> client_data)
 
-def PySetCartesianCoordinate(handle, cb):
+def PySetCartesianCoordinate(handle, cb, client_data):
     '''
     * Change point cloud coordinate system to cartesian coordinate.
     * @param  handle        device handle.
@@ -119,9 +141,11 @@ def PySetCartesianCoordinate(handle, cb):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    return SetCartesianCoordinate(handle, callCommonCommandCallback, <void*> cb)
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb 
+    return SetCartesianCoordinate(handle, cCommonCommandCallback, <void*> client_data)
 
-def PySetSphericalCoordinate(handle, cb):
+def PySetSphericalCoordinate(handle, cb, client_data):
     '''
     * Change point cloud coordinate system to spherical coordinate.
     * @param  handle        device handle.
@@ -129,12 +153,13 @@ def PySetSphericalCoordinate(handle, cb):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    return SetSphericalCoordinate(handle, callCommonCommandCallback, <void*> cb)
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb 
+    return SetSphericalCoordinate(handle, cCommonCommandCallback, <void*> client_data)
 
 def PyAddHubToConnect(broadcast_code, handle):
     '''
-    * Add a broadcast code to the connecting list and only devices with broadcast code in this list will be connected. The
-    * broadcast code is unique for every device.
+    * Add a broadcast code to the connecting list and only devices with broadcast code in this list will be connected.      * The broadcast code is unique for every device.
     * @param broadcast_code device's broadcast code.
     * @param handle device handle. For Livox Hub, the handle is always 31; for LiDAR units connected to the Livox Hub,
     * the corresponding handle is (slot-1)*3+id-1.
@@ -161,6 +186,86 @@ def PyGetConnectedDevices(devices, size):
     * @param client_data user data associated with the command.
     '''
     return GetConnectedDevices(<DeviceInfo*> devices, <uint8_t*> size)
+
+cdef void cErrorMessageCallback(livox_status status, uint8_t handle, ErrorMessage* message) noexcept:
+    '''
+    * Callback of the error status message.
+    * kStatusSuccess on successful return, see \ref LivoxStatus for other
+    * @param handle      device handle.
+    * @param response    response from the device.
+    '''
+    global pyErrorMessageCallback
+    py_message = PyErrorMessage()
+    py_message.core = dereference(message)
+    pyErrorMessageCallback(status, handle, py_message)
+
+def PySetErrorMessageCallback(handle, cb):
+    '''
+    * Add error status callback for the device.
+    * error code.
+    * @param  handle        device handle.
+    * @param  cb            callback for the command.
+    * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
+    '''
+    global pyErrorMessageCallback 
+    pyErrorMessageCallback = cb
+    return SetErrorMessageCallback(handle, cErrorMessageCallback)
+
+cdef void cDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void* client_data) noexcept:
+    '''
+    * Callback function for receiving point cloud data.
+    * @param handle      device handle.
+    * @param data        device's data.
+    * @param data_num    number of points in data.
+    * @param client_data user data associated with the command.
+    '''
+    global pyDataCallback
+    py_data = PyLivoxEthPacket()
+    py_data.core = dereference(data)
+    pyDataCallback(handle, py_data, data_num, <object> client_data)
+
+def PySetDataCallback(handle, cb, client_data):
+    '''
+    * Set the callback to receive point cloud data. Only one callback is supported for a specific device. Set the point
+    * cloud data callback before beginning sampling.
+    * @param handle      device handle.
+    * @param cb callback to receive point cloud data.
+    * @note 1: Don't do any blocking operations in callback function, it will affects further data's receiving;
+    * 2: For different device handle, callback to receive point cloud data will run on its own thread. If you bind
+    * different handle to same callback function, please make sure that operations in callback function are thread-safe;
+    * 3: callback function's data pointer will be invalid after callback fuction returns. It's recommended to
+    * copy all data_num of point cloud every time callback is triggered.
+    * @param client_data user data associated with the command.
+    '''
+    global pyDataCallback
+    pyDataCallback = cb
+    return SetDataCallback(handle, cDataCallback, <void*> client_data)
+
+def PyLidarStartSampling(handle, cb, client_data):
+    '''
+    * Start LiDAR sampling.
+    * @param  handle        device handle.
+    * @param  cb            callback for the command.
+    * @param  client_data   user data associated with the command.
+    * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
+    '''
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb
+    return LidarStartSampling(handle, cCommonCommandCallback, <void*> client_data)
+
+def PyLidarStopSampling(handle, cb, client_data):
+    '''
+    * Stop LiDAR sampling.
+    * @param  handle        device handle.
+    * @param  cb            callback for the command.
+    * @param  client_data   user data associated with the command.
+    * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
+    '''
+    global pyCommonCommandCallback
+    pyCommonCommandCallback = cb
+    return LidarStopSampling(handle, cCommonCommandCallback, <void*> client_data)
+
+
 
 cdef extern from "../sdk_core/include/livox_def.h":
 

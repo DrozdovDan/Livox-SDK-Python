@@ -2,3 +2,4 @@ build/
 *.so
 !build/tasks.py
 !build/pylivox.py
+!build/requirements.txt
