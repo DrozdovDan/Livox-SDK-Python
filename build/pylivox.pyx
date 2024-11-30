@@ -38,6 +38,12 @@ cdef extern from "../sdk_core/include/livox_sdk.h":
     void SetDataCallback(uint8_t handle, DataCallback cb, void* client_data)
     livox_status LidarStartSampling(uint8_t handle, CommonCommandCallback cb, void* client_data)
     livox_status LidarStopSampling(uint8_t handle, CommonCommandCallback cb, void* client_data)
+    ctypedef void (*LidarGetExtrinsicParameterCallback)(livox_status status, uint8_t handle, LidarGetExtrinsicParameterResponse *response, void *client_data)
+    livox_status LidarGetExtrinsicParameter(uint8_t handle, LidarGetExtrinsicParameterCallback cb, void *client_data);
+    ctypedef void (*DeviceInformationCallback)(livox_status status, uint8_t handle, DeviceInformationResponse *response, void *client_data)
+    livox_status QueryDeviceInformation(uint8_t handle, DeviceInformationCallback cb, void *client_data)
+    ctypedef void (*DeviceStateUpdateCallback)(const DeviceInfo *device, DeviceEvent type)
+    void SetDeviceStateUpdateCallback(DeviceStateUpdateCallback cb)
 
 def PyInit():
     '''
@@ -265,7 +271,87 @@ def PyLidarStopSampling(handle, cb, client_data):
     pyCommonCommandCallback = cb
     return LidarStopSampling(handle, cCommonCommandCallback, <void*> client_data)
 
+cdef void cLidarGetExtrinsicParameterCallback(livox_status status, uint8_t handle, 
+                                              LidarGetExtrinsicParameterResponse *response, void *client_data) noexcept:
+    '''
+    * @c LidarGetExtrinsicParameter response callback function.
+    * @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    * error code.
+    * @param handle      device handle.
+    * @param response    response from the device.
+    * @param client_data user data associated with the command.
+    '''
+    global pyLidarGetExtrinsicParameterCallback
+    py_response = PyLidarGetExtrinsicParameterResponse()
+    py_response.core = dereference(response)
+    pyLidarGetExtrinsicParameterCallback(status, handle, py_response, <object> client_data)
 
+def PyLidarGetExtrinsicParameter(handle, cb, client_data):
+    '''
+    * Get LiDAR extrinsic parameters.
+    * @param  handle        device handle.
+    * @param  cb            callback for the command.
+    * @param  client_data   user data associated with the command.
+    * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
+    '''
+    global pyLidarGetExtrinsicParameterCallback
+    pyLidarGetExtrinsicParameterCallback = cb
+    return LidarGetExtrinsicParameter(handle, cLidarGetExtrinsicParameterCallback, <void*> client_data)
+
+cdef void cDeviceInformationCallback(livox_status status, uint8_t handle, 
+                                DeviceInformationResponse *response, void *client_data) noexcept:
+    '''
+    * Function type of callback that queries device's information.
+    * @param status   kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    * error code.
+    * @param handle   device handle.
+    * @param response response from the device.
+    * @param client_data user data associated with the command.
+    '''
+    global pyDeviceInformationCallback
+    py_response = PyDeviceInformationResponse()
+    py_response.core = dereference(response)
+    pyDeviceInformationCallback(status, handle, py_response, <object> client_data)
+
+def PyQueryDeviceInformation(handle, cb, client_data):
+    '''
+    * Command to query device's information.
+    * @param  handle        device handle.
+    * @param  cb            callback for the command.
+    * @param  client_data   user data associated with the command.
+    * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
+    '''
+    global pyDeviceInformationCallback
+    pyDeviceInformationCallback = cb
+    return QueryDeviceInformation(handle, cDeviceInformationCallback, <void*> client_data)
+
+cdef void cDeviceStateUpdateCallback(const DeviceInfo *device, DeviceEvent type) noexcept:
+    '''
+    * @c SetDeviceStateUpdateCallback response callback function.
+    * @param device  information of the connected device.
+    * @param type    the update type that indicates connection/disconnection of the device or change of working state.
+    '''
+    global pyDeviceStateUpdateCallback
+    py_device = PyDeviceInfo()
+    py_device.core = dereference(device)
+    pyDeviceStateUpdateCallback(py_device, type)
+
+def PySetDeviceStateUpdateCallback(cb):
+    '''
+    * @brief Add a callback for device connection or working state changing event.
+    * @note Livox SDK supports two hardware connection modes. 1: Directly connecting to the LiDAR device; 2. Connecting to
+    * the LiDAR device(s) via the Livox Hub. In the first mode, connection/disconnection of every LiDAR unit is reported by
+    * this callback. In the second mode, only connection/disconnection of the Livox Hub is reported by this callback. If
+    * you want to get information of the LiDAR unit(s) connected to hub, see \ref HubQueryLidarInformation.
+    * @note 3 conditions can trigger this callback:
+    *         1. Connection and disconnection of device.
+    *         2. A change of device working state.
+    *         3. An error occurs.
+    * @param cb callback for device connection/disconnection.
+    '''
+    global pyDeviceStateUpdateCallback
+    pyDeviceStateUpdateCallback = cb
+    return SetDeviceStateUpdateCallback(cDeviceStateUpdateCallback)
 
 cdef extern from "../sdk_core/include/livox_def.h":
 
@@ -533,6 +619,19 @@ cdef extern from "../sdk_core/include/livox_def.h":
     ctypedef packed struct RainFogSuppressRequestItem:
         char broadcast_code[15] # Device broadcast code.
         uint8_t feature # Close or open the rain and fog feature.
+
+    ctypedef packed struct LidarGetExtrinsicParameterResponse:
+        uint8_t ret_code
+        float roll  # Roll angle, unit: degree.
+        float pitch # Pitch angle, unit: degree.
+        float yaw   # Yaw angle, unit: degree.
+        int32_t x   # X translation, unit: mm.
+        int32_t y   # Y translation, unit: mm.
+        int32_t z   # Z translation, unit: mm.
+
+    ctypedef packed struct DeviceInformationResponse:
+        uint8_t ret_code    # Return code.
+        uint8_t firmware_version[4] #Firmware version.
 
 cdef class PyDeviceType:
     '''
@@ -2189,3 +2288,103 @@ cdef class PyRainFogSuppressRequestItem:
     @feature.setter
     def feature(self, value):
         self.core.feature = value
+
+cdef class PyLidarGetExtrinsicParameterResponse:
+    '''
+    The response body of getting Livox LiDAR's parameters.
+    '''
+    cdef LidarGetExtrinsicParameterResponse core
+
+    def __init__(self, uint8_t ret_code=0, float roll=0, float pitch=0, float yaw=0, 
+                 int32_t x=0, int32_t y=0, int32_t z=0):
+        self.core.ret_code = ret_code
+        self.core.roll = roll
+        self.core.pitch = pitch
+        self.core.yaw = yaw
+        self.core.x = x
+        self.core.y = y
+        self.core.z = z
+
+    @property
+    def ret_code(self):
+        return self.core.ret_code
+
+    @ret_code.setter
+    def ret_code(self, value):
+        self.core.ret_code = value
+
+    @property
+    def roll(self):
+        return self.core.roll
+
+    @roll.setter
+    def roll(self, value):
+        self.core.roll = value
+
+    @property
+    def pitch(self):
+        return self.core.pitch
+
+    @pitch.setter
+    def pitch(self, value):
+        self.core.pitch = value
+
+    @property
+    def yaw(self):
+        return self.core.yaw
+
+    @yaw.setter
+    def yaw(self, value):
+        self.core.yaw = value
+
+    @property
+    def x(self):
+        return self.core.x
+
+    @x.setter
+    def x(self, value):
+        self.core.x = value
+
+    @property
+    def y(self):
+        return self.core.y
+
+    @y.setter
+    def y(self, value):
+        self.core.y = value
+
+    @property
+    def z(self):
+        return self.core.z
+
+    @z.setter
+    def z(self, value):
+        self.core.z = value
+
+cdef class PyDeviceInformationResponse:
+    '''
+    The response body of querying device information.
+    '''
+    cdef DeviceInformationResponse core
+
+    def __init__(self, uint8_t ret_code=0, firmware_version=[0 for i in range(4)]):
+        self.core.ret_code = ret_code
+        self.firmware_version = firmware_version[:4]
+
+    @property
+    def ret_code(self):
+        return self.core.ret_code
+
+    @ret_code.setter
+    def ret_code(self, value):
+        self.core.ret_code = value
+
+    @property
+    def firmware_version(self):
+        return self.core.firmware_version
+
+    @firmware_version.setter
+    def firmware_version(self, value):
+        self.core.firmware_version = value[:4]
+ 
+ 
