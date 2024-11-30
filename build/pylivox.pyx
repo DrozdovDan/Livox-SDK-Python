@@ -44,6 +44,8 @@ cdef extern from "../sdk_core/include/livox_sdk.h":
     livox_status QueryDeviceInformation(uint8_t handle, DeviceInformationCallback cb, void *client_data)
     ctypedef void (*DeviceStateUpdateCallback)(const DeviceInfo *device, DeviceEvent type)
     void SetDeviceStateUpdateCallback(DeviceStateUpdateCallback cb)
+    ctypedef void (*DeviceBroadcastCallback)(const BroadcastDeviceInfo *info)
+    void SetBroadcastCallback(DeviceBroadcastCallback cb)
 
 def PyInit():
     '''
@@ -352,6 +354,21 @@ def PySetDeviceStateUpdateCallback(cb):
     global pyDeviceStateUpdateCallback
     pyDeviceStateUpdateCallback = cb
     return SetDeviceStateUpdateCallback(cDeviceStateUpdateCallback)
+
+cdef void cDeviceBroadcastCallback(const BroadcastDeviceInfo *info) noexcept:
+    '''
+    * @c SetBroadcastCallback response callback function.
+    * @param info information of the broadcast device, becomes invalid after the function returns.
+    '''
+    global pyDeviceBroadcastCallback
+    py_info = PyBroadcastDeviceInfo()
+    py_info.core = dereference(info)
+    pyDeviceBroadcastCallback(py_info)
+
+def PySetBroadcastCallback(cb):
+    global pyDeviceBroadcastCallback
+    pyDeviceBroadcastCallback = cb
+    SetBroadcastCallback(cDeviceBroadcastCallback)
 
 cdef extern from "../sdk_core/include/livox_def.h":
 
