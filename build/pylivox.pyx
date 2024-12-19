@@ -16,36 +16,36 @@ kBroadcastCodeSize = 16
 ctypedef int32_t livox_status
 
 cdef extern from "../sdk_core/include/livox_sdk.h":
-    bool Init()
-    void Uninit()
-    bool Start()
-    void DisableConsoleLogger()
-    void SaveLoggerFile()
-    void GetLivoxSdkVersion(LivoxSdkVersion* version)
+    bool Init() 
+    void Uninit() 
+    bool Start() 
+    void DisableConsoleLogger() 
+    void SaveLoggerFile() 
+    void GetLivoxSdkVersion(LivoxSdkVersion* version) 
     ctypedef void (*CommonCommandCallback)(livox_status status, uint8_t handle, uint8_t response, void* client_data)
-    livox_status HubStartSampling(CommonCommandCallback cb, void* client_data)
-    livox_status HubStopSampling(CommonCommandCallback cb, void *client_data)
-    uint8_t HubGetLidarHandle(uint8_t slot, uint8_t id)
-    livox_status DisconnectDevice(uint8_t handle, CommonCommandCallback cb, void *client_data)
-    livox_status SetCartesianCoordinate(uint8_t handle, CommonCommandCallback cb, void *client_data)
-    livox_status SetSphericalCoordinate(uint8_t handle, CommonCommandCallback cb, void *client_data)
-    livox_status AddHubToConnect(const char *broadcast_code, uint8_t *handle)
-    livox_status AddLidarToConnect(const char *broadcast_code, uint8_t *handle)
-    livox_status GetConnectedDevices(DeviceInfo *devices, uint8_t *size)
+    livox_status HubStartSampling(CommonCommandCallback cb, void* client_data) 
+    livox_status HubStopSampling(CommonCommandCallback cb, void *client_data) 
+    uint8_t HubGetLidarHandle(uint8_t slot, uint8_t id) 
+    livox_status DisconnectDevice(uint8_t handle, CommonCommandCallback cb, void *client_data) 
+    livox_status SetCartesianCoordinate(uint8_t handle, CommonCommandCallback cb, void *client_data) 
+    livox_status SetSphericalCoordinate(uint8_t handle, CommonCommandCallback cb, void *client_data) 
+    livox_status AddHubToConnect(const char *broadcast_code, uint8_t *handle) 
+    livox_status AddLidarToConnect(const char *broadcast_code, uint8_t *handle) 
+    livox_status GetConnectedDevices(DeviceInfo *devices, uint8_t *size) 
     ctypedef void (*ErrorMessageCallback)(livox_status status, uint8_t handle, ErrorMessage *message)
-    livox_status SetErrorMessageCallback(uint8_t handle, ErrorMessageCallback cb);
+    livox_status SetErrorMessageCallback(uint8_t handle, ErrorMessageCallback cb) 
     ctypedef void (*DataCallback)(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void* client_data)
     void SetDataCallback(uint8_t handle, DataCallback cb, void* client_data)
-    livox_status LidarStartSampling(uint8_t handle, CommonCommandCallback cb, void* client_data)
-    livox_status LidarStopSampling(uint8_t handle, CommonCommandCallback cb, void* client_data)
+    livox_status LidarStartSampling(uint8_t handle, CommonCommandCallback cb, void* client_data) 
+    livox_status LidarStopSampling(uint8_t handle, CommonCommandCallback cb, void* client_data) 
     ctypedef void (*LidarGetExtrinsicParameterCallback)(livox_status status, uint8_t handle, LidarGetExtrinsicParameterResponse *response, void *client_data)
-    livox_status LidarGetExtrinsicParameter(uint8_t handle, LidarGetExtrinsicParameterCallback cb, void *client_data);
+    livox_status LidarGetExtrinsicParameter(uint8_t handle, LidarGetExtrinsicParameterCallback cb, void *client_data) 
     ctypedef void (*DeviceInformationCallback)(livox_status status, uint8_t handle, DeviceInformationResponse *response, void *client_data)
-    livox_status QueryDeviceInformation(uint8_t handle, DeviceInformationCallback cb, void *client_data)
+    livox_status QueryDeviceInformation(uint8_t handle, DeviceInformationCallback cb, void *client_data) 
     ctypedef void (*DeviceStateUpdateCallback)(const DeviceInfo *device, DeviceEvent type)
-    void SetDeviceStateUpdateCallback(DeviceStateUpdateCallback cb)
+    void SetDeviceStateUpdateCallback(DeviceStateUpdateCallback cb) 
     ctypedef void (*DeviceBroadcastCallback)(const BroadcastDeviceInfo *info)
-    void SetBroadcastCallback(DeviceBroadcastCallback cb)
+    void SetBroadcastCallback(DeviceBroadcastCallback cb) 
 
 def PyInit():
     '''
@@ -97,7 +97,19 @@ cdef void cCommonCommandCallback(livox_status status, uint8_t handle, uint8_t re
     '''
     global pyCommonCommandCallback
     pyCommonCommandCallback(status, handle, response, <object> client_data)
-    
+
+cdef void cHubStartSampling(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pyHubStartSampling
+    pyHubStartSampling(status, handle, response, <object> client_data)
+ 
 def PyHubStartSampling(cb, client_data):
     '''
     * Start hub sampling.
@@ -105,10 +117,22 @@ def PyHubStartSampling(cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb
-    return HubStartSampling(cCommonCommandCallback, <void*> client_data)
+    global pyHubStartSampling
+    pyHubStartSampling = cb
+    return HubStartSampling(cHubStartSampling, <void*> client_data)
 
+cdef void cHubStopSampling(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pyHubStopSampling
+    pyHubStopSampling(status, handle, response, <object> client_data)
+ 
 def PyHubStopSampling(cb, client_data):
     '''
     * Stop the Livox Hub's sampling.
@@ -116,9 +140,9 @@ def PyHubStopSampling(cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb 
-    return HubStopSampling(cCommonCommandCallback, <void*> client_data)
+    global pyHubStopSampling
+    pyHubStopSampling = cb 
+    return HubStopSampling(cHubStopSampling, <void*> client_data)
 
 def PyHubGetLidarHandle(slot, id):
     '''
@@ -129,6 +153,18 @@ def PyHubGetLidarHandle(slot, id):
     '''
     return HubGetLidarHandle(slot, id)
 
+cdef void cDisconnectDevice(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pyDisconnectDevice
+    pyDisconnectDevice(status, handle, response, <object> client_data)
+ 
 def PyDisconnectDevice(handle, cb, client_data):
     '''
     * Disconnect divice.
@@ -137,10 +173,22 @@ def PyDisconnectDevice(handle, cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb 
-    return DisconnectDevice(handle, cCommonCommandCallback, <void*> client_data)
+    global pyDisconnectDevice
+    pyDisconnectDevice = cb 
+    return DisconnectDevice(handle, cDisconnectDevice, <void*> client_data)
 
+cdef void cSetCartesianCoordinate(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pySetCartesianCoordinate
+    pySetCartesianCoordinate(status, handle, response, <object> client_data)
+ 
 def PySetCartesianCoordinate(handle, cb, client_data):
     '''
     * Change point cloud coordinate system to cartesian coordinate.
@@ -149,10 +197,22 @@ def PySetCartesianCoordinate(handle, cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb 
-    return SetCartesianCoordinate(handle, cCommonCommandCallback, <void*> client_data)
+    global pySetCartesianCoordinate
+    pySetCartesianCoordinate = cb 
+    return SetCartesianCoordinate(handle, cSetCartesianCoordinate, <void*> client_data)
 
+cdef void cSetSphericalCoordinate(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pySetSphericalCoordinate
+    pySetSphericalCoordinate(status, handle, response, <object> client_data)
+ 
 def PySetSphericalCoordinate(handle, cb, client_data):
     '''
     * Change point cloud coordinate system to spherical coordinate.
@@ -161,9 +221,9 @@ def PySetSphericalCoordinate(handle, cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb 
-    return SetSphericalCoordinate(handle, cCommonCommandCallback, <void*> client_data)
+    global pySetSphericalCoordinate
+    pySetSphericalCoordinate = cb 
+    return SetSphericalCoordinate(handle, cSetSphericalCoordinate, <void*> client_data)
 
 def PyAddHubToConnect(broadcast_code, handle):
     '''
@@ -207,6 +267,19 @@ cdef void cErrorMessageCallback(livox_status status, uint8_t handle, ErrorMessag
     py_message.core = dereference(message)
     pyErrorMessageCallback(status, handle, py_message)
 
+cdef void cSetErrorMessageCallback(livox_status status, uint8_t handle, ErrorMessage* message) noexcept:
+    '''
+    * Callback of the error status message.
+    * kStatusSuccess on successful return, see \ref LivoxStatus for other
+    * @param handle      device handle.
+    * @param response    response from the device.
+    '''
+    global pySetErrorMessageCallback
+    py_message = PyErrorMessage()
+    py_message.core = dereference(message)
+    pySetErrorMessageCallback(status, handle, py_message)
+
+
 def PySetErrorMessageCallback(handle, cb):
     '''
     * Add error status callback for the device.
@@ -215,9 +288,9 @@ def PySetErrorMessageCallback(handle, cb):
     * @param  cb            callback for the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyErrorMessageCallback 
-    pyErrorMessageCallback = cb
-    return SetErrorMessageCallback(handle, cErrorMessageCallback)
+    global pySetErrorMessageCallback 
+    pySetErrorMessageCallback = cb
+    return SetErrorMessageCallback(handle, cSetErrorMessageCallback)
 
 cdef void cDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void* client_data) noexcept:
     '''
@@ -232,6 +305,19 @@ cdef void cDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_num,
     py_data.core = dereference(data)
     pyDataCallback(handle, py_data, data_num, <object> client_data)
 
+cdef void cSetDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void* client_data) noexcept:
+    '''
+    * Callback function for receiving point cloud data.
+    * @param handle      device handle.
+    * @param data        device's data.
+    * @param data_num    number of points in data.
+    * @param client_data user data associated with the command.
+    '''
+    global pySetDataCallback
+    py_data = PyLivoxEthPacket()
+    py_data.core = dereference(data)
+    pySetDataCallback(handle, py_data, data_num, <object> client_data)
+
 def PySetDataCallback(handle, cb, client_data):
     '''
     * Set the callback to receive point cloud data. Only one callback is supported for a specific device. Set the point
@@ -245,9 +331,21 @@ def PySetDataCallback(handle, cb, client_data):
     * copy all data_num of point cloud every time callback is triggered.
     * @param client_data user data associated with the command.
     '''
-    global pyDataCallback
-    pyDataCallback = cb
-    return SetDataCallback(handle, cDataCallback, <void*> client_data)
+    global pySetDataCallback
+    pySetDataCallback = cb
+    return SetDataCallback(handle, cSetDataCallback, <void*> client_data)
+
+cdef void cLidarStartSampling(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pyLidarStartSampling
+    pyLidarStartSampling(status, handle, response, <object> client_data)
 
 def PyLidarStartSampling(handle, cb, client_data):
     '''
@@ -257,9 +355,21 @@ def PyLidarStartSampling(handle, cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb
-    return LidarStartSampling(handle, cCommonCommandCallback, <void*> client_data)
+    global pyLidarStartSampling
+    pyLidarStartSampling = cb
+    return LidarStartSampling(handle, cLidarStartSampling, <void*> client_data)
+
+cdef void cLidarStopSampling(livox_status status, uint8_t handle, uint8_t response, void* client_data) noexcept:
+    '''
+    Function type of callback with 1 byte of response.
+    @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    error code.
+    @param handle      device handle.
+    @param response    response from the device.
+    @param client_data user data associated with the command.
+    '''
+    global pyLidarStopSampling
+    pyLidarStopSampling(status, handle, response, <object> client_data)
 
 def PyLidarStopSampling(handle, cb, client_data):
     '''
@@ -269,9 +379,9 @@ def PyLidarStopSampling(handle, cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyCommonCommandCallback
-    pyCommonCommandCallback = cb
-    return LidarStopSampling(handle, cCommonCommandCallback, <void*> client_data)
+    global pyLidarStopSampling
+    pyLidarStopSampling = cb
+    return LidarStopSampling(handle, cLidarStopSampling, <void*> client_data)
 
 cdef void cLidarGetExtrinsicParameterCallback(livox_status status, uint8_t handle, 
                                               LidarGetExtrinsicParameterResponse *response, void *client_data) noexcept:
@@ -288,6 +398,21 @@ cdef void cLidarGetExtrinsicParameterCallback(livox_status status, uint8_t handl
     py_response.core = dereference(response)
     pyLidarGetExtrinsicParameterCallback(status, handle, py_response, <object> client_data)
 
+cdef void cLidarGetExtrinsicParameter(livox_status status, uint8_t handle, 
+                                              LidarGetExtrinsicParameterResponse *response, void *client_data) noexcept:
+    '''
+    * @c LidarGetExtrinsicParameter response callback function.
+    * @param status      kStatusSuccess on successful return, kStatusTimeout on timeout, see \ref LivoxStatus for other
+    * error code.
+    * @param handle      device handle.
+    * @param response    response from the device.
+    * @param client_data user data associated with the command.
+    '''
+    global pyLidarGetExtrinsicParameter
+    py_response = PyLidarGetExtrinsicParameterResponse()
+    py_response.core = dereference(response)
+    pyLidarGetExtrinsicParameter(status, handle, py_response, <object> client_data)
+
 def PyLidarGetExtrinsicParameter(handle, cb, client_data):
     '''
     * Get LiDAR extrinsic parameters.
@@ -296,9 +421,9 @@ def PyLidarGetExtrinsicParameter(handle, cb, client_data):
     * @param  client_data   user data associated with the command.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    global pyLidarGetExtrinsicParameterCallback
-    pyLidarGetExtrinsicParameterCallback = cb
-    return LidarGetExtrinsicParameter(handle, cLidarGetExtrinsicParameterCallback, <void*> client_data)
+    global pyLidarGetExtrinsicParameter
+    pyLidarGetExtrinsicParameter = cb
+    return LidarGetExtrinsicParameter(handle, cLidarGetExtrinsicParameter, <void*> client_data)
 
 cdef void cDeviceInformationCallback(livox_status status, uint8_t handle, 
                                 DeviceInformationResponse *response, void *client_data) noexcept:

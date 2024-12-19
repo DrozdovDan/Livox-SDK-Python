@@ -3,3 +3,4 @@ build/
 !build/tasks.py
 !build/pylivox.py
 !build/requirements.txt
+sample/
