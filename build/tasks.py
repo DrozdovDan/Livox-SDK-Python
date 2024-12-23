@@ -5,7 +5,7 @@ import os
 def compile_python_module(cpp_name, extension_name):
     invoke.run(
         "g++ -O3 -Wall -shared -std=c++11 -fPIC "
-        "-I /usr/include/python3.7 -I . -I ./Livox-SDK-Python/build "
+        "-I /usr/include/python3.10 -I . -I ./Livox-SDK-Python/build "
         "{0} "
         "-o {1}`python3-config --extension-suffix` "
         "-L. -l livox_sdk -Wl,-rpath,.".format(cpp_name, extension_name)

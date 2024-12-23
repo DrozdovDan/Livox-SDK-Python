@@ -4,7 +4,7 @@ from libc.stdint cimport int32_t, int16_t, int8_t, int64_t, uint8_t, uint16_t, u
 from cython.cimports.cpython import array
 import array
 from cython.operator import dereference
-
+from cython.cimports.cpython.pystate import PyGILState_Ensure, PyGILState_Release, PyGILState_STATE
 kMaxLidarCount = 32
 
 LIVOX_SDK_MAJOR_VERSION = 2
@@ -107,8 +107,12 @@ cdef void cHubStartSampling(livox_status status, uint8_t handle, uint8_t respons
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pyHubStartSampling
-    pyHubStartSampling(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyHubStartSampling
+        pyHubStartSampling(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
  
 def PyHubStartSampling(cb, client_data):
     '''
@@ -130,8 +134,12 @@ cdef void cHubStopSampling(livox_status status, uint8_t handle, uint8_t response
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pyHubStopSampling
-    pyHubStopSampling(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyHubStopSampling
+        pyHubStopSampling(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
  
 def PyHubStopSampling(cb, client_data):
     '''
@@ -162,8 +170,12 @@ cdef void cDisconnectDevice(livox_status status, uint8_t handle, uint8_t respons
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pyDisconnectDevice
-    pyDisconnectDevice(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyDisconnectDevice
+        pyDisconnectDevice(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
  
 def PyDisconnectDevice(handle, cb, client_data):
     '''
@@ -186,8 +198,12 @@ cdef void cSetCartesianCoordinate(livox_status status, uint8_t handle, uint8_t r
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pySetCartesianCoordinate
-    pySetCartesianCoordinate(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pySetCartesianCoordinate
+        pySetCartesianCoordinate(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
  
 def PySetCartesianCoordinate(handle, cb, client_data):
     '''
@@ -210,8 +226,12 @@ cdef void cSetSphericalCoordinate(livox_status status, uint8_t handle, uint8_t r
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pySetSphericalCoordinate
-    pySetSphericalCoordinate(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pySetSphericalCoordinate
+        pySetSphericalCoordinate(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
  
 def PySetSphericalCoordinate(handle, cb, client_data):
     '''
@@ -242,7 +262,9 @@ def PyAddLidarToConnect(broadcast_code, handle):
     * @param size    number of devices connected.
     * @return kStatusSuccess on successful return, see \ref LivoxStatus for other error code.
     '''
-    return AddLidarToConnect(<char*> broadcast_code, <uint8_t*> handle)
+    cdef bytes encoded = broadcast_code.encode('utf-8')
+    cdef uint8_t buffer = handle & 0xFF
+    return AddLidarToConnect(encoded, &buffer), buffer
 
 def PyGetConnectedDevices(devices, size):
     '''
@@ -274,10 +296,14 @@ cdef void cSetErrorMessageCallback(livox_status status, uint8_t handle, ErrorMes
     * @param handle      device handle.
     * @param response    response from the device.
     '''
-    global pySetErrorMessageCallback
-    py_message = PyErrorMessage()
-    py_message.core = dereference(message)
-    pySetErrorMessageCallback(status, handle, py_message)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pySetErrorMessageCallback
+        py_message = PyErrorMessage()
+        py_message.core = dereference(message)
+        pySetErrorMessageCallback(status, handle, py_message)
+    finally:
+        PyGILState_Release(state)
 
 
 def PySetErrorMessageCallback(handle, cb):
@@ -300,10 +326,14 @@ cdef void cDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_num,
     * @param data_num    number of points in data.
     * @param client_data user data associated with the command.
     '''
-    global pyDataCallback
-    py_data = PyLivoxEthPacket()
-    py_data.core = dereference(data)
-    pyDataCallback(handle, py_data, data_num, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyDataCallback
+        py_data = PyLivoxEthPacket()
+        py_data.core = dereference(data)
+        pyDataCallback(handle, py_data, data_num, <object> client_data)
+    finally:
+        PyGILState_Release(state)
 
 cdef void cSetDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void* client_data) noexcept:
     '''
@@ -313,10 +343,14 @@ cdef void cSetDataCallback(uint8_t handle, LivoxEthPacket *data, uint32_t data_n
     * @param data_num    number of points in data.
     * @param client_data user data associated with the command.
     '''
-    global pySetDataCallback
-    py_data = PyLivoxEthPacket()
-    py_data.core = dereference(data)
-    pySetDataCallback(handle, py_data, data_num, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pySetDataCallback
+        py_data = PyLivoxEthPacket()
+        py_data.core = dereference(data)
+        pySetDataCallback(handle, py_data, data_num, <object> client_data)
+    finally:
+        PyGILState_Release(state)
 
 def PySetDataCallback(handle, cb, client_data):
     '''
@@ -344,8 +378,12 @@ cdef void cLidarStartSampling(livox_status status, uint8_t handle, uint8_t respo
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pyLidarStartSampling
-    pyLidarStartSampling(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyLidarStartSampling
+        pyLidarStartSampling(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
 
 def PyLidarStartSampling(handle, cb, client_data):
     '''
@@ -368,8 +406,12 @@ cdef void cLidarStopSampling(livox_status status, uint8_t handle, uint8_t respon
     @param response    response from the device.
     @param client_data user data associated with the command.
     '''
-    global pyLidarStopSampling
-    pyLidarStopSampling(status, handle, response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyLidarStopSampling
+        pyLidarStopSampling(status, handle, response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
 
 def PyLidarStopSampling(handle, cb, client_data):
     '''
@@ -393,10 +435,14 @@ cdef void cLidarGetExtrinsicParameterCallback(livox_status status, uint8_t handl
     * @param response    response from the device.
     * @param client_data user data associated with the command.
     '''
-    global pyLidarGetExtrinsicParameterCallback
-    py_response = PyLidarGetExtrinsicParameterResponse()
-    py_response.core = dereference(response)
-    pyLidarGetExtrinsicParameterCallback(status, handle, py_response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyLidarGetExtrinsicParameterCallback
+        py_response = PyLidarGetExtrinsicParameterResponse()
+        py_response.core = dereference(response)
+        pyLidarGetExtrinsicParameterCallback(status, handle, py_response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
 
 cdef void cLidarGetExtrinsicParameter(livox_status status, uint8_t handle, 
                                               LidarGetExtrinsicParameterResponse *response, void *client_data) noexcept:
@@ -408,10 +454,15 @@ cdef void cLidarGetExtrinsicParameter(livox_status status, uint8_t handle,
     * @param response    response from the device.
     * @param client_data user data associated with the command.
     '''
-    global pyLidarGetExtrinsicParameter
-    py_response = PyLidarGetExtrinsicParameterResponse()
-    py_response.core = dereference(response)
-    pyLidarGetExtrinsicParameter(status, handle, py_response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyLidarGetExtrinsicParameter
+        py_response = PyLidarGetExtrinsicParameterResponse()
+        py_response.core = dereference(response)
+        pyLidarGetExtrinsicParameter(status, handle, py_response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
+
 
 def PyLidarGetExtrinsicParameter(handle, cb, client_data):
     '''
@@ -435,10 +486,14 @@ cdef void cDeviceInformationCallback(livox_status status, uint8_t handle,
     * @param response response from the device.
     * @param client_data user data associated with the command.
     '''
-    global pyDeviceInformationCallback
-    py_response = PyDeviceInformationResponse()
-    py_response.core = dereference(response)
-    pyDeviceInformationCallback(status, handle, py_response, <object> client_data)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyDeviceInformationCallback
+        py_response = PyDeviceInformationResponse()
+        py_response.core = dereference(response)
+        pyDeviceInformationCallback(status, handle, py_response, <object> client_data)
+    finally:
+        PyGILState_Release(state)
 
 def PyQueryDeviceInformation(handle, cb, client_data):
     '''
@@ -458,10 +513,14 @@ cdef void cDeviceStateUpdateCallback(const DeviceInfo *device, DeviceEvent type)
     * @param device  information of the connected device.
     * @param type    the update type that indicates connection/disconnection of the device or change of working state.
     '''
-    global pyDeviceStateUpdateCallback
-    py_device = PyDeviceInfo()
-    py_device.core = dereference(device)
-    pyDeviceStateUpdateCallback(py_device, type)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyDeviceStateUpdateCallback
+        py_device = PyDeviceInfo()
+        py_device.core = dereference(device)
+        pyDeviceStateUpdateCallback(py_device, type)
+    finally:
+        PyGILState_Release(state)
 
 def PySetDeviceStateUpdateCallback(cb):
     '''
@@ -485,10 +544,14 @@ cdef void cDeviceBroadcastCallback(const BroadcastDeviceInfo *info) noexcept:
     * @c SetBroadcastCallback response callback function.
     * @param info information of the broadcast device, becomes invalid after the function returns.
     '''
-    global pyDeviceBroadcastCallback
-    py_info = PyBroadcastDeviceInfo()
-    py_info.core = dereference(info)
-    pyDeviceBroadcastCallback(py_info)
+    cdef PyGILState_STATE state = PyGILState_Ensure()
+    try:
+        global pyDeviceBroadcastCallback
+        py_info = PyBroadcastDeviceInfo()
+        py_info.core = dereference(info)
+        pyDeviceBroadcastCallback(py_info)
+    finally:
+        PyGILState_Release(state)
 
 def PySetBroadcastCallback(cb):
     global pyDeviceBroadcastCallback
@@ -2119,9 +2182,9 @@ cdef class PyDeviceInfo:
                  uint8_t slot=0, uint8_t id=0, 
                  uint8_t type=0, uint16_t data_port=0, uint16_t cmd_port=0, uint16_t sensor_port=0, 
                   ip='0'*16, 
-                 PyLidarState state=PyLidarState(), PyLidarFeature feature=PyLidarFeature(), 
+                 state=0, feature=0, 
                  PyStatusUnion status=PyStatusUnion(), firmware_version=[0 for _ in range(4)]):
-        self.core.broadcast_code = broadcast_code.encode['utf-8'][:kBroadcastCodeSize-1]  # Ensure null-termination
+        self.core.broadcast_code = broadcast_code.encode('utf-8')[:kBroadcastCodeSize - 1]  # Ensure null-termination
         self.core.handle = handle
         self.core.slot = slot
         self.core.id = id
@@ -2130,8 +2193,8 @@ cdef class PyDeviceInfo:
         self.core.cmd_port = cmd_port
         self.core.sensor_port = sensor_port
         self.core.ip = ip.encode('utf-8')[:16]  # Ensure null-termination
-        self.core.state = state.core
-        self.core.feature = feature.core
+        self.core.state = state
+        self.core.feature = feature
         self.core.status = status.core
         self.core.firmware_version = firmware_version[:4]  # Ensure length
 
@@ -2213,7 +2276,7 @@ cdef class PyDeviceInfo:
 
     @state.setter
     def state(self, value):
-        self.core.state = value.core
+        self.core.state = value
 
     @property
     def feature(self):
@@ -2221,7 +2284,7 @@ cdef class PyDeviceInfo:
 
     @feature.setter
     def feature(self, value):
-        self.core.feature = value.core
+        self.core.feature = value
 
     @property
     def status(self):
