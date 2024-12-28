@@ -76,7 +76,6 @@ void OnLidarErrorStatusCallback(livox_status status, uint8_t handle, ErrorMessag
 
 /** Receiving point cloud data from Livox LiDAR. */
 void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void *client_data) {
-  printf("GET LIDAR DATA WORKS\n");
   if (data) {
     if (handle < connected_lidar_count && is_finish_extrinsic_parameter) {
       std::unique_lock<std::mutex> lock(mtx);

@@ -2068,12 +2068,13 @@ cdef class PyLivoxEthPacket:
     '''
     cdef LivoxEthPacket core
 
-    def __init__(self, uint8_t version=0, uint8_t slot=0, uint8_t id=0, uint32_t err_code=0, 
+    def __init__(self, uint8_t version=0, uint8_t slot=0, uint8_t id=0, uint8_t rsvd=0, uint32_t err_code=0, 
             uint8_t timestamp_type=0, uint8_t data_type=0, timestamp=[0 for _ in range(8)], 
                   data=[0]):
         self.core.version = version
         self.core.slot = slot
         self.core.id = id
+        self.core.rsvd = rsvd
         self.core.err_code = err_code
         self.core.timestamp_type = timestamp_type
         self.core.data_type = data_type
@@ -2103,6 +2104,14 @@ cdef class PyLivoxEthPacket:
     @id.setter
     def id(self, value):
         self.core.id = value
+
+    @property
+    def rsvd(self):
+        return self.core.rsvd
+
+    @rsvd.setter
+    def rsvd(self, value):
+        self.core.rsvd = value
 
     @property
     def err_code(self):
@@ -2165,7 +2174,9 @@ cdef class PyStatusUnion:
 
     @property
     def status_code(self):
-        return self.core.status_code
+        py_status_code = PyErrorMessage()
+        py_status_code.core = self.core.status_code
+        return py_status_code
 
     @status_code.setter
     def status_code(self, value):
@@ -2288,7 +2299,9 @@ cdef class PyDeviceInfo:
 
     @property
     def status(self):
-        return self.core.status
+        py_status = PyStatusUnion()
+        py_status.core = self.core.status
+        return py_status
 
     @status.setter
     def status(self, value):
